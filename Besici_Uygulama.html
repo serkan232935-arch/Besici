@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Besici - Hayvan Takip</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f4f6f4;color:#202520}
+header{background:#2f6b3b;color:white;padding:20px}
+main{max-width:700px;margin:auto;padding:14px}
+.card{background:white;border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 2px 8px #0001}
+h1,h2{margin-top:0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+input,button{width:100%;box-sizing:border-box;padding:12px;margin:5px 0;border-radius:9px;border:1px solid #ccd3cc}
+button{background:#2f6b3b;color:white;border:0;font-weight:bold}
+.stat{font-size:22px;font-weight:bold}.muted{color:#687068}
+.animal{border-left:5px solid #2f6b3b;padding-left:12px;margin:10px 0}
+</style>
+</head>
+<body>
+<header><h1>🐄 Besici</h1><div>Hayvan takip ve kâr hesabı</div></header>
+<main>
+<div class="card">
+<h2>Özet</h2>
+<div class="grid">
+<div>Hayvan sayısı<div class="stat" id="count">0</div></div>
+<div>Toplam yem gideri<div class="stat" id="feedTotal">0 TL</div></div>
+</div>
+</div>
+
+<div class="card">
+<h2>Hayvan Ekle</h2>
+<input id="name" placeholder="Hayvan adı / küpe no">
+<input id="age" type="number" placeholder="Yaş (ay)">
+<input id="weight" type="number" placeholder="Kilo (kg)">
+<input id="feed" type="number" placeholder="Günlük yem (kg)">
+<input id="feedPrice" type="number" placeholder="Yemin kg fiyatı (TL)">
+<input id="buy" type="number" placeholder="Alış fiyatı (TL)">
+<input id="sale" type="number" placeholder="Tahmini satış fiyatı (TL)">
+<button onclick="addAnimal()">Hayvanı Kaydet</button>
+</div>
+
+<div class="card">
+<h2>Hayvanlarım</h2>
+<div id="animals"><div class="muted">Henüz hayvan eklenmedi.</div></div>
+</div>
+</main>
+
+<script>
+let animals=JSON.parse(localStorage.getItem("besiciAnimals")||"[]");
+
+function save(){localStorage.setItem("besiciAnimals",JSON.stringify(animals));render()}
+function addAnimal(){
+ const a={
+  name:document.getElementById("name").value||"İsimsiz",
+  age:+document.getElementById("age").value||0,
+  weight:+document.getElementById("weight").value||0,
+  feed:+document.getElementById("feed").value||0,
+  feedPrice:+document.getElementById("feedPrice").value||0,
+  buy:+document.getElementById("buy").value||0,
+  sale:+document.getElementById("sale").value||0
+ };
+ animals.push(a); save();
+ document.querySelectorAll("input").forEach(x=>x.value="");
+}
+function render(){
+ document.getElementById("count").textContent=animals.length;
+ let total=animals.reduce((s,a)=>s+a.feed*a.feedPrice*30,0);
+ document.getElementById("feedTotal").textContent=total.toLocaleString("tr-TR",{maximumFractionDigits:0})+" TL";
+ let box=document.getElementById("animals");
+ if(!animals.length){box.innerHTML='<div class="muted">Henüz hayvan eklenmedi.</div>';return}
+ box.innerHTML=animals.map((a,i)=>{
+   let monthly=a.feed*a.feedPrice*30;
+   let profit=a.sale-a.buy-monthly;
+   return `<div class="animal">
+   <b>${escapeHtml(a.name)}</b><br>
+   ${a.age} aylık · ${a.weight} kg<br>
+   Günlük yem: ${a.feed} kg · Aylık yem: ${monthly.toLocaleString("tr-TR")} TL<br>
+   Tahmini kâr: <b>${profit.toLocaleString("tr-TR")} TL</b>
+   <button onclick="removeAnimal(${i})">Sil</button>
+   </div>`;
+ }).join("");
+}
+function removeAnimal(i){if(confirm("Bu hayvan silinsin mi?")){animals.splice(i,1);save()}}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+render();
+</script>
+</body>
+</html>
